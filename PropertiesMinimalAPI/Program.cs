@@ -1,10 +1,12 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using PropertiesMinimalAPI.Maps;
 using PropertiesMinimalAPI.Models;
 using PropertiesMinimalAPI.Models.DTOS;
 using System.Collections;
+using System.Net;
 using static PropertiesMinimalAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -31,29 +33,45 @@ if (app.Environment.IsDevelopment())
 
 app.MapGet("/api/properties", (ILogger<Program> logger) =>
 {
+    ResponseAPI resp = new();
+
     logger.Log(LogLevel.Information, "Carga todas las propiedades");
-    return Results.Ok(DataProperties.Properties);
-}).WithName("GetProperties").Produces<IEnumerable>(200);
+
+    resp.Result = DataProperties.Properties;
+    resp.Success = true;
+    resp.StatusCode = HttpStatusCode.OK;
+
+    return Results.Ok(resp);
+}).WithName("GetProperties").Produces<ResponseAPI>(200);
 
 app.MapGet("/api/properties/{id:int}", (int id) =>
 {
-    return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
-}).WithName("GetProperty").Produces<Properties>(200);
+    ResponseAPI resp = new();
+
+    resp.Result = DataProperties.Properties.FirstOrDefault(p => p.Id == id);
+    resp.Success = true;
+    resp.StatusCode = HttpStatusCode.OK;
+
+    return Results.Ok(resp);
+
+}).WithName("GetProperty").Produces<ResponseAPI>(200);
 
 app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
 {
+    ResponseAPI resp = new() {Success = false, StatusCode = HttpStatusCode.BadRequest};
 
     var resultValidators = await _validation.ValidateAsync(createPropertyDTO);
     //validar
     if (!resultValidators.IsValid)
     {
-        return Results.BadRequest(resultValidators.Errors.FirstOrDefault().ToString());
+        resp.Errors.Add(resultValidators.Errors.FirstOrDefault().ToString());
+        return Results.BadRequest(resp);
     }
 
     if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == createPropertyDTO.Name.ToLower()) != null)
     {
-        return Results.BadRequest("El nombre ya existe");
-
+        resp.Errors.Add("El nombre ya existe");
+        return Results.BadRequest(resp);
     }
 
     Properties property = _mapper.Map<Properties>(createPropertyDTO);
@@ -65,8 +83,15 @@ app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreateProperty
 
     //return Results.Ok(DataProperties.Properties);
     //return Results.Created($"api/properties/{property.Id}", property);
-    return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, propertyDTO);
-}).WithName("CreatePorperty").Accepts<CreatePropertyDTO>("application/json").Produces<PropertyDTO>(201).Produces(400);
+    //return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, propertyDTO);
+
+    resp.Result = propertyDTO;
+    resp.Success = true;
+    resp.StatusCode = HttpStatusCode.Created;
+
+    return Results.Ok(resp);
+
+}).WithName("CreatePorperty").Accepts<CreatePropertyDTO>("application/json").Produces<ResponseAPI>(201).Produces(400);
 
 app.UseHttpsRedirection();
 
