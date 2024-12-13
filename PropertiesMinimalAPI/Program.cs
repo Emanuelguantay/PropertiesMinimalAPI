@@ -1,3 +1,8 @@
+using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
+using PropertiesMinimalAPI.Models;
+using static PropertiesMinimalAPI.Data;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -14,7 +19,35 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/saludo", () => "Bienvenido curso Minimal API .NET Core");
+app.MapGet("/api/properties", () =>
+{
+    return Results.Ok(DataProperties.Properties);
+});
+
+app.MapGet("/api/properties/{id:int}", (int id) =>
+{
+    return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
+});
+
+app.MapPost("/api/properties", ([FromBody] Properties property) =>
+{
+    //validar
+    if (property.Id != 0 || string.IsNullOrEmpty(property.Name))
+    {
+        return Results.BadRequest("Id incorrecto o el nombre esta vacio");
+    }
+
+    if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == property.Name.ToLower()) != null)
+    {
+        return Results.BadRequest("El nombre ya existe");
+
+    }
+
+    property.Id = DataProperties.Properties.OrderByDescending(p => p.Id).FirstOrDefault().Id + 1;
+    DataProperties.Properties.Add(property);
+
+    return Results.Ok(DataProperties.Properties);
+});
 
 app.UseHttpsRedirection();
 

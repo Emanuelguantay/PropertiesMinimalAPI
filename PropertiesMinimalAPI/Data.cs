@@ -4,7 +4,7 @@ namespace PropertiesMinimalAPI
 {
     public class Data
     {
-        public static class DataPropertes
+        public static class DataProperties
         {
             public static List<Properties> Properties = new List<Properties>
             {
