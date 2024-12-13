@@ -93,6 +93,42 @@ app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreateProperty
 
 }).WithName("CreatePorperty").Accepts<CreatePropertyDTO>("application/json").Produces<ResponseAPI>(201).Produces(400);
 
+app.MapPut("/api/properties", async (IMapper _mapper, IValidator<UpdatePropertyDTO> _validation, [FromBody] UpdatePropertyDTO updatePropertyDTO) =>
+{
+    ResponseAPI resp = new() { Success = false, StatusCode = HttpStatusCode.BadRequest };
+
+    var resultValidators = await _validation.ValidateAsync(updatePropertyDTO);
+    //validar
+    if (!resultValidators.IsValid)
+    {
+        resp.Errors.Add(resultValidators.Errors.FirstOrDefault().ToString());
+        return Results.BadRequest(resp);
+    }
+
+    //if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == updatePropertyDTO.Name.ToLower()) != null)
+    //{
+    //    resp.Errors.Add("El nombre ya existe");
+    //    return Results.BadRequest(resp);
+    //}
+
+    Properties propertyBD = DataProperties.Properties.FirstOrDefault(r => r.Id == updatePropertyDTO.Id);
+
+    propertyBD.Name = updatePropertyDTO.Name;
+    propertyBD.Description = updatePropertyDTO.Description;
+    propertyBD.Location = updatePropertyDTO.Location;
+    propertyBD.IsActive = updatePropertyDTO.IsActive;
+
+    PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(propertyBD);
+
+    resp.Result = propertyDTO;
+    resp.Success = true;
+    resp.StatusCode = HttpStatusCode.Created;
+
+    return Results.Ok(resp);
+
+}).WithName("UpdatePorperty").Accepts<UpdatePropertyDTO>("application/json").Produces<ResponseAPI>(200).Produces(400);
+
+
 app.UseHttpsRedirection();
 
 app.Run();
