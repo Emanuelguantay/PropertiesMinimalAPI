@@ -19,15 +19,16 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/api/properties", () =>
+app.MapGet("/api/properties", (ILogger<Program> logger) =>
 {
+    logger.Log(LogLevel.Information, "Carga todas las propiedades");
     return Results.Ok(DataProperties.Properties);
-});
+}).WithName("GetProperties");
 
 app.MapGet("/api/properties/{id:int}", (int id) =>
 {
     return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
-});
+}).WithName("GetProperty");
 
 app.MapPost("/api/properties", ([FromBody] Properties property) =>
 {
@@ -46,8 +47,10 @@ app.MapPost("/api/properties", ([FromBody] Properties property) =>
     property.Id = DataProperties.Properties.OrderByDescending(p => p.Id).FirstOrDefault().Id + 1;
     DataProperties.Properties.Add(property);
 
-    return Results.Ok(DataProperties.Properties);
-});
+    //return Results.Ok(DataProperties.Properties);
+    //return Results.Created($"api/properties/{property.Id}", property);
+    return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, property);
+}).WithName("CreatePorperty");
 
 app.UseHttpsRedirection();
 
