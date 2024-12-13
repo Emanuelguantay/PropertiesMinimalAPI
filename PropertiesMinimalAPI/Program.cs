@@ -1,6 +1,8 @@
-using Microsoft.AspNetCore.Http.HttpResults;
+using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using PropertiesMinimalAPI.Maps;
 using PropertiesMinimalAPI.Models;
+using PropertiesMinimalAPI.Models.DTOS;
 using System.Collections;
 using static PropertiesMinimalAPI.Data;
 
@@ -10,6 +12,9 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+//AutoMapper
+builder.Services.AddAutoMapper(typeof(CustomMap));
 
 var app = builder.Build();
 
@@ -31,27 +36,31 @@ app.MapGet("/api/properties/{id:int}", (int id) =>
     return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
 }).WithName("GetProperty").Produces<Properties>(200);
 
-app.MapPost("/api/properties", ([FromBody] Properties property) =>
+app.MapPost("/api/properties", (IMapper _mapper, [FromBody] CreatePropertyDTO createPropertyDTO) =>
 {
     //validar
-    if (property.Id != 0 || string.IsNullOrEmpty(property.Name))
+    if (string.IsNullOrEmpty(createPropertyDTO.Name))
     {
         return Results.BadRequest("Id incorrecto o el nombre esta vacio");
     }
 
-    if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == property.Name.ToLower()) != null)
+    if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == createPropertyDTO.Name.ToLower()) != null)
     {
         return Results.BadRequest("El nombre ya existe");
 
     }
 
+    Properties property = _mapper.Map<Properties>(createPropertyDTO);
+
     property.Id = DataProperties.Properties.OrderByDescending(p => p.Id).FirstOrDefault().Id + 1;
     DataProperties.Properties.Add(property);
 
+    PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(createPropertyDTO);
+
     //return Results.Ok(DataProperties.Properties);
     //return Results.Created($"api/properties/{property.Id}", property);
-    return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, property);
-}).WithName("CreatePorperty").Accepts<Properties>("application/json").Produces<Properties>(201).Produces(400);
+    return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, propertyDTO);
+}).WithName("CreatePorperty").Accepts<CreatePropertyDTO>("application/json").Produces<PropertyDTO>(201).Produces(400);
 
 app.UseHttpsRedirection();
 
