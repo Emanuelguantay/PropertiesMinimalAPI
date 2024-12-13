@@ -40,10 +40,10 @@ app.MapGet("/api/properties/{id:int}", (int id) =>
     return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
 }).WithName("GetProperty").Produces<Properties>(200);
 
-app.MapPost("/api/properties", (IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
+app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
 {
 
-    var resultValidators = _validation.ValidateAsync(createPropertyDTO).GetAwaiter().GetResult();
+    var resultValidators = await _validation.ValidateAsync(createPropertyDTO);
     //validar
     if (!resultValidators.IsValid)
     {
