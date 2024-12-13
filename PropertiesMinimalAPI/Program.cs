@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using PropertiesMinimalAPI.Models;
+using System.Collections;
 using static PropertiesMinimalAPI.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,12 +24,12 @@ app.MapGet("/api/properties", (ILogger<Program> logger) =>
 {
     logger.Log(LogLevel.Information, "Carga todas las propiedades");
     return Results.Ok(DataProperties.Properties);
-}).WithName("GetProperties");
+}).WithName("GetProperties").Produces<IEnumerable>(200);
 
 app.MapGet("/api/properties/{id:int}", (int id) =>
 {
     return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
-}).WithName("GetProperty");
+}).WithName("GetProperty").Produces<Properties>(200);
 
 app.MapPost("/api/properties", ([FromBody] Properties property) =>
 {
@@ -50,7 +51,7 @@ app.MapPost("/api/properties", ([FromBody] Properties property) =>
     //return Results.Ok(DataProperties.Properties);
     //return Results.Created($"api/properties/{property.Id}", property);
     return Results.CreatedAtRoute("GetProperty",new { id = property.Id }, property);
-}).WithName("CreatePorperty");
+}).WithName("CreatePorperty").Accepts<Properties>("application/json").Produces<Properties>(201).Produces(400);
 
 app.UseHttpsRedirection();
 
