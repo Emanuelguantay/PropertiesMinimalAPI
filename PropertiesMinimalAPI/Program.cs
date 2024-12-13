@@ -14,7 +14,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-
+app.MapGet("/saludo", () => "Bienvenido curso Minimal API .NET Core");
 
 app.UseHttpsRedirection();
 
