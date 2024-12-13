@@ -1,4 +1,5 @@
 using AutoMapper;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using PropertiesMinimalAPI.Maps;
 using PropertiesMinimalAPI.Models;
@@ -15,6 +16,9 @@ builder.Services.AddSwaggerGen();
 
 //AutoMapper
 builder.Services.AddAutoMapper(typeof(CustomMap));
+
+//Validators
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
 var app = builder.Build();
 
@@ -36,12 +40,14 @@ app.MapGet("/api/properties/{id:int}", (int id) =>
     return Results.Ok(DataProperties.Properties.FirstOrDefault(p => p.Id == id));
 }).WithName("GetProperty").Produces<Properties>(200);
 
-app.MapPost("/api/properties", (IMapper _mapper, [FromBody] CreatePropertyDTO createPropertyDTO) =>
+app.MapPost("/api/properties", (IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
 {
+
+    var resultValidators = _validation.ValidateAsync(createPropertyDTO).GetAwaiter().GetResult();
     //validar
-    if (string.IsNullOrEmpty(createPropertyDTO.Name))
+    if (!resultValidators.IsValid)
     {
-        return Results.BadRequest("Id incorrecto o el nombre esta vacio");
+        return Results.BadRequest(resultValidators.Errors.FirstOrDefault().ToString());
     }
 
     if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == createPropertyDTO.Name.ToLower()) != null)
@@ -55,7 +61,7 @@ app.MapPost("/api/properties", (IMapper _mapper, [FromBody] CreatePropertyDTO cr
     property.Id = DataProperties.Properties.OrderByDescending(p => p.Id).FirstOrDefault().Id + 1;
     DataProperties.Properties.Add(property);
 
-    PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(createPropertyDTO);
+    PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(property);
 
     //return Results.Ok(DataProperties.Properties);
     //return Results.Created($"api/properties/{property.Id}", property);
