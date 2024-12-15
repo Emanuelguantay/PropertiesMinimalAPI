@@ -128,6 +128,25 @@ app.MapPut("/api/properties", async (IMapper _mapper, IValidator<UpdatePropertyD
 
 }).WithName("UpdatePorperty").Accepts<UpdatePropertyDTO>("application/json").Produces<ResponseAPI>(200).Produces(400);
 
+app.MapDelete("/api/properties/{id:int}", (int id) =>
+{
+    ResponseAPI resp = new() { Success = false, StatusCode = HttpStatusCode.BadRequest };
+    Properties propertyBD = DataProperties.Properties.FirstOrDefault(r => r.Id == id);
+
+    if (propertyBD != null)
+    {
+        DataProperties.Properties.Remove(propertyBD);
+        resp.Success = true;
+        resp.StatusCode = HttpStatusCode.NoContent;
+        return Results.Ok(resp);
+    }
+    else
+    {
+        resp.Errors.Add("El ID de la propiedad es inválido");
+        return Results.BadRequest(resp);
+    }
+
+});
 
 app.UseHttpsRedirection();
 
