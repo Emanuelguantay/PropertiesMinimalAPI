@@ -1,15 +1,19 @@
 using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using PropertiesMinimalAPI.Data;
 using PropertiesMinimalAPI.Maps;
 using PropertiesMinimalAPI.Models;
 using PropertiesMinimalAPI.Models.DTOS;
 using System.Collections;
 using System.Net;
-using static PropertiesMinimalAPI.Data;
+using static PropertiesMinimalAPI.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+//Config conexion a BD
+builder.Services.AddDbContext<ApplicationDbContext>(opc => opc.UseNpgsql(builder.Configuration.GetConnectionString("ConexionSql")));
 
 // Add services to the container.
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

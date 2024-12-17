@@ -1,6 +1,6 @@
 ﻿using PropertiesMinimalAPI.Models;
 
-namespace PropertiesMinimalAPI
+namespace PropertiesMinimalAPI.Data
 {
     public class Data
     {
