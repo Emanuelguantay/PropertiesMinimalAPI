@@ -60,7 +60,7 @@ app.MapGet("/api/properties/{id:int}", async (ApplicationDbContext _bd, int id) 
 
 }).WithName("GetProperty").Produces<ResponseAPI>(200);
 
-app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
+app.MapPost("/api/properties", async (ApplicationDbContext _bd, IMapper _mapper, IValidator<CreatePropertyDTO> _validation, [FromBody] CreatePropertyDTO createPropertyDTO) =>
 {
     ResponseAPI resp = new() {Success = false, StatusCode = HttpStatusCode.BadRequest};
 
@@ -72,7 +72,7 @@ app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreateProperty
         return Results.BadRequest(resp);
     }
 
-    if (DataProperties.Properties.FirstOrDefault(p => p.Name.ToLower() == createPropertyDTO.Name.ToLower()) != null)
+    if (await _bd.Properties.FirstOrDefaultAsync(p => p.Name.ToLower() == createPropertyDTO.Name.ToLower()) != null)
     {
         resp.Errors.Add("El nombre ya existe");
         return Results.BadRequest(resp);
@@ -80,8 +80,8 @@ app.MapPost("/api/properties", async (IMapper _mapper, IValidator<CreateProperty
 
     Properties property = _mapper.Map<Properties>(createPropertyDTO);
 
-    property.Id = DataProperties.Properties.OrderByDescending(p => p.Id).FirstOrDefault().Id + 1;
-    DataProperties.Properties.Add(property);
+    await _bd.Properties.AddAsync(property);
+    await _bd.SaveChangesAsync();
 
     PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(property);
 
