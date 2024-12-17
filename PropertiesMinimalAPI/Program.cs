@@ -97,7 +97,7 @@ app.MapPost("/api/properties", async (ApplicationDbContext _bd, IMapper _mapper,
 
 }).WithName("CreatePorperty").Accepts<CreatePropertyDTO>("application/json").Produces<ResponseAPI>(201).Produces(400);
 
-app.MapPut("/api/properties", async (IMapper _mapper, IValidator<UpdatePropertyDTO> _validation, [FromBody] UpdatePropertyDTO updatePropertyDTO) =>
+app.MapPut("/api/properties", async (ApplicationDbContext _bd, IMapper _mapper, IValidator<UpdatePropertyDTO> _validation, [FromBody] UpdatePropertyDTO updatePropertyDTO) =>
 {
     ResponseAPI resp = new() { Success = false, StatusCode = HttpStatusCode.BadRequest };
 
@@ -115,12 +115,14 @@ app.MapPut("/api/properties", async (IMapper _mapper, IValidator<UpdatePropertyD
     //    return Results.BadRequest(resp);
     //}
 
-    Properties propertyBD = DataProperties.Properties.FirstOrDefault(r => r.Id == updatePropertyDTO.Id);
+    Properties propertyBD = await _bd.Properties.FirstOrDefaultAsync(r => r.Id == updatePropertyDTO.Id);
 
     propertyBD.Name = updatePropertyDTO.Name;
     propertyBD.Description = updatePropertyDTO.Description;
     propertyBD.Location = updatePropertyDTO.Location;
     propertyBD.IsActive = updatePropertyDTO.IsActive;
+
+    await _bd.SaveChangesAsync();
 
     PropertyDTO propertyDTO = _mapper.Map<PropertyDTO>(propertyBD);
 
