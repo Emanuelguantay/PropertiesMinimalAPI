@@ -48,11 +48,11 @@ app.MapGet("/api/properties", async (ApplicationDbContext _bd, ILogger<Program> 
     return Results.Ok(resp);
 }).WithName("GetProperties").Produces<ResponseAPI>(200);
 
-app.MapGet("/api/properties/{id:int}", (int id) =>
+app.MapGet("/api/properties/{id:int}", async (ApplicationDbContext _bd, int id) =>
 {
     ResponseAPI resp = new();
 
-    resp.Result = DataProperties.Properties.FirstOrDefault(p => p.Id == id);
+    resp.Result = await _bd.Properties.FirstOrDefaultAsync(r => r.Id == id);
     resp.Success = true;
     resp.StatusCode = HttpStatusCode.OK;
 
