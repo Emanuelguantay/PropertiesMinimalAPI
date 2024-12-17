@@ -35,13 +35,13 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.MapGet("/api/properties", (ILogger<Program> logger) =>
+app.MapGet("/api/properties", async (ApplicationDbContext _bd, ILogger<Program> logger) =>
 {
     ResponseAPI resp = new();
 
     logger.Log(LogLevel.Information, "Carga todas las propiedades");
 
-    resp.Result = DataProperties.Properties;
+    resp.Result = _bd.Properties;
     resp.Success = true;
     resp.StatusCode = HttpStatusCode.OK;
 
