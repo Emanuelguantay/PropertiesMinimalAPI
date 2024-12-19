@@ -8,7 +8,10 @@ namespace PropertiesMinimalAPI.Maps
     {
         public CustomMap()
         {
-            CreateMap<Properties, CreatePropertyDTO>().ReverseMap();
+            CreateMap<CreatePropertyDTO, Properties>()
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ReverseMap();
+
             CreateMap<Properties, PropertyDTO>().ReverseMap();
         }
     }
