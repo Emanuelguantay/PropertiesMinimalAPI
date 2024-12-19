@@ -134,14 +134,16 @@ app.MapPut("/api/properties", async (ApplicationDbContext _bd, IMapper _mapper, 
 
 }).WithName("UpdatePorperty").Accepts<UpdatePropertyDTO>("application/json").Produces<ResponseAPI>(200).Produces(400);
 
-app.MapDelete("/api/properties/{id:int}", (int id) =>
+app.MapDelete("/api/properties/{id:int}", async(ApplicationDbContext _bd, int id) =>
 {
     ResponseAPI resp = new() { Success = false, StatusCode = HttpStatusCode.BadRequest };
-    Properties propertyBD = DataProperties.Properties.FirstOrDefault(r => r.Id == id);
+    Properties propertyBD = await _bd.Properties.FirstOrDefaultAsync(r => r.Id == id);
 
     if (propertyBD != null)
     {
-        DataProperties.Properties.Remove(propertyBD);
+        _bd.Properties.Remove(propertyBD);
+        await _bd.SaveChangesAsync();
+
         resp.Success = true;
         resp.StatusCode = HttpStatusCode.NoContent;
         return Results.Ok(resp);
